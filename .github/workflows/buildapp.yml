@@ -8,8 +8,9 @@ name: Build and Package SCInsta
 on:
     workflow_dispatch:
         inputs:
-            decrypted_instagram_file:
-                description: "The decrypted Instagram IPA file to use"
+            decrypted_instagram_url:
+                description: "The direct URL to the decrypted Instagram IPA"
+                default: ""
                 required: true
                 type: string
             upload_artifact:
@@ -17,7 +18,7 @@ on:
                 default: true
                 required: false
                 type: boolean
-
+  
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
@@ -75,10 +76,11 @@ jobs:
               run: |
                 cd main
                 mkdir -p packages
-                cp ${{ github.event.inputs.decrypted_instagram_file }} packages/com.burbn.instagram.ipa
+                wget "$Instagram_URL" --no-verbose -O packages/com.burbn.instagram.ipa
                 ls -la packages
               env:
                 THEOS: ${{ github.workspace }}/theos
+                Instagram_URL: ${{ inputs.decrypted_instagram_url }}
 
             - name: Get SCInsta Version
               id: scinsta_version
