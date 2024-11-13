@@ -11,7 +11,7 @@ on:
             decrypted_instagram_file:
                 description: "The decrypted Instagram IPA file to use"
                 required: true
-                type: string  # En supposant que le chemin du fichier sera passé sous forme de chaîne
+                type: string
             upload_artifact:
                 description: "Upload Artifact"
                 default: true
@@ -87,11 +87,15 @@ jobs:
                 echo "SCINSTA_VERSION=${SCINSTA_VERSION}" >> "$GITHUB_ENV"
                 echo "version=${SCINSTA_VERSION}" >> "$GITHUB_OUTPUT"
             
+            - name: Install pyzule
+              run: bash -c "$(curl -fsSL https://raw.githubusercontent.com/asdfzxcvbn/pyzule/main/install-pyzule.sh)"
+
+            - name: Make build.sh executable
+              run: chmod +x main/build.sh
+
             - name: Build SCInsta tweak for sideloading (as IPA)
               run: |
-                bash -c "$(curl https://raw.githubusercontent.com/asdfzxcvbn/pyzule/main/install-pyzule.sh)"
                 cd main
-                ls -la
                 ./build.sh sideload
                 ls -la packages
               env:
