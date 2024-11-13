@@ -8,20 +8,20 @@ name: Build and Package SCInsta
 on:
     workflow_dispatch:
         inputs:
-            decrypted_instagram_url:
-                description: "The direct URL to the decrypted Instagram IPA"
-                default: ""
+            decrypted_instagram_file:
+                description: "The decrypted Instagram IPA file to use"
                 required: true
-                type: string
+                type: string  # En supposant que le chemin du fichier sera passé sous forme de chaîne
             upload_artifact:
                 description: "Upload Artifact"
                 default: true
                 required: false
                 type: boolean
-  
+
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
+
 jobs:
     build:
         name: Build SCInsta
@@ -74,35 +74,26 @@ jobs:
             - name: Prepare Instagram IPA
               run: |
                 cd main
-
                 mkdir -p packages
-                wget "$Instagram_URL" --no-verbose -O packages/com.burbn.instagram.ipa
-
+                cp ${{ github.event.inputs.decrypted_instagram_file }} packages/com.burbn.instagram.ipa
                 ls -la packages
-                
               env:
                 THEOS: ${{ github.workspace }}/theos
-                Instagram_URL: ${{ inputs.decrypted_instagram_url }}
 
             - name: Get SCInsta Version
               id: scinsta_version
               run: |
                 SCINSTA_VERSION=$(awk '/Version:/ {print $2}' main/control)
-
                 echo "SCINSTA_VERSION=${SCINSTA_VERSION}" >> "$GITHUB_ENV"
                 echo "version=${SCINSTA_VERSION}" >> "$GITHUB_OUTPUT"
             
             - name: Build SCInsta tweak for sideloading (as IPA)
               run: |
                 bash -c "$(curl https://raw.githubusercontent.com/asdfzxcvbn/pyzule/main/install-pyzule.sh)"
-                
                 cd main
                 ls -la
-
                 ./build.sh sideload
-
                 ls -la packages
-                
               env:
                 THEOS: ${{ github.workspace }}/theos
 
@@ -114,7 +105,7 @@ jobs:
             - name: Pass package name to upload action
               id: package_name
               run: |
-                echo "package=$(ls -t main/packages |  head -n1)" >> "$GITHUB_OUTPUT"
+                echo "package=$(ls -t main/packages | head -n1)" >> "$GITHUB_OUTPUT"
 
             - name: Upload Artifact
               if: ${{ inputs.upload_artifact }}
